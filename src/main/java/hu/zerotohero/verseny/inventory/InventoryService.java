@@ -151,7 +151,7 @@ public class InventoryService {
         }
 
         if (file.exists() && tempFile.exists()) {
-            tempFile.renameTo(file);
+            tempFile.renameTo(file); // fixme did not work
         }
 
         return foundInventory;
@@ -191,7 +191,7 @@ public class InventoryService {
         }
 
         if (file.exists() && tempFile.exists()) {
-            tempFile.renameTo(file);
+            tempFile.renameTo(file); // fixme did not work
         }
     }
 

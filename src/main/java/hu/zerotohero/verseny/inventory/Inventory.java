@@ -3,6 +3,7 @@ package hu.zerotohero.verseny.inventory;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 public class Inventory {
     public static final String REQUIRED = "REQUIRED";
@@ -15,7 +16,8 @@ public class Inventory {
     public String itemId;
     public String originalOwnerId;
     public String investigation;
-    public LocalDateTime timestamp; // todo get example format
+    public LocalDateTime timestamp;
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     public Inventory() {
     }
@@ -48,7 +50,7 @@ public class Inventory {
         inventory.itemId = itemId;
         inventory.originalOwnerId = originalOwnerId;
         inventory.investigation = investigation;
-        inventory.timestamp = LocalDateTime.parse(timestamp);
+        inventory.timestamp = LocalDateTime.parse(timestamp, dateTimeFormatter);
         return inventory;
     }
 
@@ -64,7 +66,7 @@ public class Inventory {
         csvRow.append(";");
         if (investigation != null) csvRow.append(investigation);
         csvRow.append(";");
-        if (timestamp != null) csvRow.append(timestamp.toString());
+        if (timestamp != null) csvRow.append(timestamp.format(Inventory.dateTimeFormatter));
         return csvRow.toString();
     }
 }
