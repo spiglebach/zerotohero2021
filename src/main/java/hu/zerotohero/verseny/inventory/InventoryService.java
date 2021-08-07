@@ -155,11 +155,7 @@ public class InventoryService {
         }
 
         if (file.exists() && tempFile.exists()) {
-            File oldFile = new File(Inventory.OLD_STORAGE_FILENAME);
-            if (oldFile.exists()) oldFile.delete();
-            file.renameTo(oldFile);
             tempFile.renameTo(file);
-            oldFile.delete();
         }
 
         return foundInventory;
@@ -206,11 +202,7 @@ public class InventoryService {
         }
 
         if (file.exists() && tempFile.exists()) {
-            File oldFile = new File(Inventory.OLD_STORAGE_FILENAME);
-            if (oldFile.exists()) oldFile.delete();
-            file.renameTo(oldFile);
             tempFile.renameTo(file);
-            oldFile.delete();
         }
     }
 }
