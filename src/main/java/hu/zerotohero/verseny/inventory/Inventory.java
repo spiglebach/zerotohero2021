@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 public class Inventory {
+    public static final String REQUIRED = "REQUIRED";
+    public static final String NOT_REQUIRED = "NOT REQUIRED";
     public static final String STORAGE_FILENAME = "inventory.csv";
     public static final String TEMP_STORAGE_FILENAME = "inventory_temp.csv";
     public static final String HEADER = "ID;EMPLOYEE_ID;ITEM_ID;ORIGINAL_OWNER_ID;INVESTIGATION;TIMESTAMP\n";

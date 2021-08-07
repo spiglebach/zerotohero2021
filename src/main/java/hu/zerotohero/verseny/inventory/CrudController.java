@@ -15,7 +15,7 @@ import java.util.Map;
 public class CrudController {
     @Autowired InventoryService inventoryService;
 
-    private Map<String, Inventory> cache = new HashMap<>();
+    private final Map<String, Inventory> cache = new HashMap<>();
 
     @PostMapping
     public ResponseEntity<String> create(@RequestBody PostInventoryRequest request) {
@@ -41,7 +41,7 @@ public class CrudController {
             return ResponseEntity.notFound().build();
         }
 
-        cache.putIfAbsent(id, inventory);
+        cache.put(id, inventory);
         return ResponseEntity.ok(inventory);
     }
 
@@ -55,7 +55,7 @@ public class CrudController {
     }
 
     @PostMapping("check")
-    public ResponseEntity<Void> performInventoryCheck(){
+    public ResponseEntity<Void> performInventoryCheck() {
         cache.clear();
         try {
             inventoryService.performInventoryCheck();
@@ -73,6 +73,7 @@ public class CrudController {
         if (updatedInventory == null) {
             return ResponseEntity.notFound().build();
         }
+        cache.put(id, updatedInventory);
         return ResponseEntity.ok(updatedInventory);
     }
 }

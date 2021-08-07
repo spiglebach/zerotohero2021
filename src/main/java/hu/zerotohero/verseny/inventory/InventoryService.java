@@ -123,22 +123,18 @@ public class InventoryService {
                     Inventory inventory = parseInventoryFromLine(line);
                     inventory.update(newInventoryData);
 
-
-                    Optional<OriginalRequest> originalRequest = originalRequests.stream()
-                            .filter(or -> or.itemId.equals(inventory.itemId))
-                            .findFirst();
-                    boolean employeeDoesNotExist = originalRequests.stream()
-                            .noneMatch(or -> or.employeeId.equals(inventory.employeeId));
-                    if (!originalRequest.isPresent() || employeeDoesNotExist) {
-                        inventory.investigation = "REQUIRED";
-                    } else {
-                        inventory.investigation = "NOT REQUIRED";
-                        String originalOwnerId = originalRequest.get().employeeId;
+                    try {
+                        OriginalRequest originalRequestForItem =
+                                checkInventoryAgainstOriginalRequests(inventory, originalRequests);
+                        inventory.investigation = Inventory.NOT_REQUIRED;
+                        String originalOwnerId = originalRequestForItem.employeeId;
                         if (!inventory.employeeId.equals(originalOwnerId)) {
                             inventory.originalOwnerId = originalOwnerId;
                         } else {
                             inventory.originalOwnerId = null;
                         }
+                    } catch (InventoryDiscrepancyException e) {
+                        inventory.investigation = Inventory.REQUIRED;
                     }
 
                     foundInventory = inventory;
@@ -176,19 +172,16 @@ public class InventoryService {
                 String line = bufferedReader.readLine();
                 while (line != null) {
                     Inventory inventory = parseInventoryFromLine(line);
-                    Optional<OriginalRequest> originalRequest = originalRequests.stream()
-                            .filter(or -> or.itemId.equals(inventory.itemId))
-                            .findFirst();
-                    boolean employeeDoesNotExist = originalRequests.stream()
-                            .noneMatch(or -> or.employeeId.equals(inventory.employeeId));
-                    if (!originalRequest.isPresent() || employeeDoesNotExist) {
-                        inventory.investigation = "REQUIRED";
-                    } else {
-                        inventory.investigation = "NOT REQUIRED";
-                        String originalOwnerId = originalRequest.get().employeeId;
+                    try {
+                        OriginalRequest originalRequestForItem =
+                                checkInventoryAgainstOriginalRequests(inventory, originalRequests);
+                        inventory.investigation = Inventory.NOT_REQUIRED;
+                        String originalOwnerId = originalRequestForItem.employeeId;
                         if (!inventory.employeeId.equals(originalOwnerId)) {
                             inventory.originalOwnerId = originalOwnerId;
                         }
+                    } catch (InventoryDiscrepancyException e) {
+                        inventory.investigation = Inventory.REQUIRED;
                     }
 
                     tempFileWriter.write(inventory.toCsv());
@@ -204,5 +197,19 @@ public class InventoryService {
         if (file.exists() && tempFile.exists()) {
             tempFile.renameTo(file);
         }
+    }
+
+    private OriginalRequest checkInventoryAgainstOriginalRequests(
+            Inventory currentInventory,
+            List<OriginalRequest> originalRequests) {
+        boolean employeeDoesNotExist = originalRequests.stream()
+                .noneMatch(or -> or.employeeId.equals(currentInventory.employeeId));
+        if (employeeDoesNotExist) throw new InventoryDiscrepancyException();
+
+        Optional<OriginalRequest> originalRequest = originalRequests.stream()
+                .filter(or -> or.itemId.equals(currentInventory.itemId))
+                .findFirst();
+
+        return originalRequest.orElseThrow(InventoryDiscrepancyException::new);
     }
 }
