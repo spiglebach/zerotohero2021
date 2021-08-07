@@ -3,6 +3,8 @@ package hu.zerotohero.verseny;
 import hu.zerotohero.verseny.inventory.Inventory;
 import hu.zerotohero.verseny.inventory.InventoryService;
 import hu.zerotohero.verseny.inventory.PostInventoryRequest;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Spy;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,13 +24,8 @@ class VersenyApplicationTests {
 
     @Spy InventoryService inventoryService;
 
-    @BeforeTestExecution
-    public void setup() {
-        when(inventoryService.getInventoryStorageFileName()).thenReturn(TEST_INVENTORY_STORAGE_FILENAME);
-    }
-
-    @AfterTestExecution
-    public void deleteTestFile() {
+    @AfterAll
+    public static void deleteTestFile() {
         new File(TEST_INVENTORY_STORAGE_FILENAME).delete();
     }
 
@@ -38,6 +35,7 @@ class VersenyApplicationTests {
 
     @Test
     void testInventoryCreation() throws IOException {
+        when(inventoryService.getInventoryStorageFileName()).thenReturn(TEST_INVENTORY_STORAGE_FILENAME);
         List<Inventory> initialInventories = inventoryService.getInventories();
         assertNotNull(initialInventories);
         int initialInventoryCount = initialInventories.size();
