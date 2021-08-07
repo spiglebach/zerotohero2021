@@ -73,33 +73,30 @@ public class InventoryService {
     private Inventory parseInventoryFromLine(String line) {
         String[] properties = line.split(";");
         return Inventory.fromCsv(
-                properties[0],
-                properties[1],
-                properties[2],
-                properties[3],
-                properties[4],
-                properties[5]);
+                StringUtils.getValueOrNullIfNullOrBlank(properties[0]),
+                StringUtils.getValueOrNullIfNullOrBlank(properties[1]),
+                StringUtils.getValueOrNullIfNullOrBlank(properties[2]),
+                StringUtils.getValueOrNullIfNullOrBlank(properties[3]),
+                StringUtils.getValueOrNullIfNullOrBlank(properties[4]),
+                StringUtils.getValueOrNullIfNullOrBlank(properties[5]));
     }
 
     public List<OriginalRequest> getOriginalRequests() {
-        try {
-            File file = new File(getInventoryStorageFileName());
-            FileReader fileReader = new FileReader(file);
-            try (BufferedReader bufferedReader = new BufferedReader(fileReader)) {
-                bufferedReader.readLine(); // header
+            try (BufferedReader originalRequestStorageReader =
+                         new BufferedReader(new FileReader(OriginalRequest.STORAGE_FILENAME))) {
+                originalRequestStorageReader.readLine(); // read and ignore header
                 List<OriginalRequest> originalRequests = new ArrayList<>();
-                String line = bufferedReader.readLine();
+                String line = originalRequestStorageReader.readLine();
                 while (line != null) {
                     String[] properties = line.split(";");
                     originalRequests.add(OriginalRequest.fromCsv(
-                            properties[0],
-                            properties[1]));
+                            StringUtils.getValueOrNullIfNullOrBlank(properties[0]),
+                            StringUtils.getValueOrNullIfNullOrBlank(properties[1])));
 
-                    line = bufferedReader.readLine();
+                    line = originalRequestStorageReader.readLine();
                 }
                 return originalRequests;
-            }
-        } catch (Exception e) {
+            } catch (Exception e) {
             return Collections.emptyList();
         }
     }
@@ -112,14 +109,14 @@ public class InventoryService {
         if (tempFile.exists()) {
             tempFile.delete();
         }
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+        try (BufferedReader inventoryStorageReader = new BufferedReader(new FileReader(file));
              FileWriter tempFileWriter = new FileWriter(tempFile, true)) {
-            tempFileWriter.write(bufferedReader.readLine() + "\n"); // header
-            String line = bufferedReader.readLine();
+            tempFileWriter.write(inventoryStorageReader.readLine() + "\n"); // header
+            String line = inventoryStorageReader.readLine();
             while (line != null) {
                 if (!id.equals(line.split(";")[0])) {
                     tempFileWriter.write(line + "\n");
-                    line = bufferedReader.readLine();
+                    line = inventoryStorageReader.readLine();
                     continue;
                 }
                 Inventory inventory = parseInventoryFromLine(line);
@@ -143,7 +140,7 @@ public class InventoryService {
 
                 tempFileWriter.write(inventory.toCsv() + "\n");
 
-                line = bufferedReader.readLine();
+                line = inventoryStorageReader.readLine();
             }
         } catch (Exception e) {
             tempFile.delete();
@@ -151,7 +148,8 @@ public class InventoryService {
         }
 
         if (file.exists() && tempFile.exists()) {
-            tempFile.renameTo(file); // fixme did not work
+            file.delete();
+            tempFile.renameTo(file);
         }
 
         return foundInventory;
@@ -191,7 +189,8 @@ public class InventoryService {
         }
 
         if (file.exists() && tempFile.exists()) {
-            tempFile.renameTo(file); // fixme did not work
+            file.delete();
+            tempFile.renameTo(file);
         }
     }
 

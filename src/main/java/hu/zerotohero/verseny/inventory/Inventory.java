@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 public class Inventory {
     public static final String REQUIRED = "REQUIRED";
@@ -19,11 +20,11 @@ public class Inventory {
     public LocalDateTime timestamp;
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-    public Inventory() {
+    private Inventory() {
     }
 
     public Inventory(PostInventoryRequest request) {
-        this.id = String.valueOf(System.nanoTime()); // todo customize id
+        this.id = UUID.randomUUID().toString().toUpperCase();
         this.employeeId = request.employeeId;
         this.itemId = request.itemId;
         Instant timestampInstant = Instant.ofEpochSecond(request.epochSecond);
