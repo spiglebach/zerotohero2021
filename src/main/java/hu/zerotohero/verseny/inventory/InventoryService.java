@@ -10,10 +10,15 @@ import java.util.Optional;
 
 @Service
 public class InventoryService {
+
+    public String getInventoryStorageFileName() {
+        return Inventory.STORAGE_FILENAME;
+    }
+
     public Inventory create(PostInventoryRequest request) {
         try {
             Inventory newInventory = new Inventory(request);
-            File file = new File(Inventory.STORAGE_FILENAME);
+            File file = new File(getInventoryStorageFileName());
             boolean newFile = !file.exists();
             try (FileWriter fileWriter = new FileWriter(file, true)) {
                 if (newFile) {
@@ -30,7 +35,7 @@ public class InventoryService {
 
     public Inventory findById(String id) {
         try {
-            FileReader fileReader = new FileReader(Inventory.STORAGE_FILENAME);
+            FileReader fileReader = new FileReader(getInventoryStorageFileName());
             try (BufferedReader bufferedReader = new BufferedReader(fileReader)) {
                 bufferedReader.readLine(); // header
                 String line = bufferedReader.readLine();
@@ -49,7 +54,7 @@ public class InventoryService {
 
     public List<Inventory> getInventories() throws IOException {
         try {
-            FileReader fileReader = new FileReader(Inventory.STORAGE_FILENAME);
+            FileReader fileReader = new FileReader(getInventoryStorageFileName());
             try (BufferedReader bufferedReader = new BufferedReader(fileReader)) {
                 bufferedReader.readLine(); // header
                 List<Inventory> inventories = new ArrayList<>();
@@ -68,7 +73,7 @@ public class InventoryService {
 
     public List<OriginalRequest> getOriginalRequests() {
         try {
-            File file = new File(OriginalRequest.STORAGE_FILENAME);
+            File file = new File(getInventoryStorageFileName());
             FileReader fileReader = new FileReader(file);
             try (BufferedReader bufferedReader = new BufferedReader(fileReader)) {
                 bufferedReader.readLine(); // header
@@ -103,7 +108,7 @@ public class InventoryService {
     public Inventory updateById(String id, PostInventoryRequest newInventoryData) {
         Inventory foundInventory = null;
         List<OriginalRequest> originalRequests = getOriginalRequests();
-        File file = new File(Inventory.STORAGE_FILENAME);
+        File file = new File(getInventoryStorageFileName());
         File tempFile = new File(Inventory.TEMP_STORAGE_FILENAME);
         if (tempFile.exists()) {
             tempFile.delete();
@@ -159,7 +164,7 @@ public class InventoryService {
 
     public void performInventoryCheck() throws IOException {
         List<OriginalRequest> originalRequests = getOriginalRequests();
-        File file = new File(Inventory.STORAGE_FILENAME);
+        File file = new File(getInventoryStorageFileName());
         File tempFile = new File(Inventory.TEMP_STORAGE_FILENAME);
         if (tempFile.exists()) {
             tempFile.delete();
