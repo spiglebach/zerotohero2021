@@ -24,8 +24,7 @@ public class InventoryService {
                 if (newFile) {
                     fileWriter.write(Inventory.HEADER);
                 }
-                fileWriter.write(newInventory.toCsv());
-                fileWriter.write("\n");
+                fileWriter.write(newInventory.toCsv() + "\n");
             }
             return newInventory;
         } catch (Exception e) {
@@ -71,6 +70,17 @@ public class InventoryService {
         }
     }
 
+    private Inventory parseInventoryFromLine(String line) {
+        String[] properties = line.split(";");
+        return Inventory.fromCsv(
+                properties[0],
+                properties[1],
+                properties[2],
+                properties[3],
+                properties[4],
+                properties[5]);
+    }
+
     public List<OriginalRequest> getOriginalRequests() {
         try {
             File file = new File(getInventoryStorageFileName());
@@ -94,17 +104,6 @@ public class InventoryService {
         }
     }
 
-    private Inventory parseInventoryFromLine(String line) {
-        String[] properties = line.split(";");
-        return Inventory.fromCsv(
-                properties[0],
-                properties[1],
-                properties[2],
-                properties[3],
-                properties[4],
-                properties[5]);
-    }
-
     public Inventory updateById(String id, PostInventoryRequest newInventoryData) {
         Inventory foundInventory = null;
         List<OriginalRequest> originalRequests = getOriginalRequests();
@@ -113,42 +112,38 @@ public class InventoryService {
         if (tempFile.exists()) {
             tempFile.delete();
         }
-        try {
-            FileReader fileReader = new FileReader(file);
-            try (BufferedReader bufferedReader = new BufferedReader(fileReader);
-                 FileWriter tempFileWriter = new FileWriter(tempFile, true)) {
-                tempFileWriter.write(bufferedReader.readLine() + "\n"); // header
-                String line = bufferedReader.readLine();
-                while (line != null) {
-                    if (!id.equals(line.split(";")[0])) {
-                        tempFileWriter.write(line + "\n");
-                        line = bufferedReader.readLine();
-                        continue;
-                    }
-                    Inventory inventory = parseInventoryFromLine(line);
-                    inventory.update(newInventoryData);
-
-                    try {
-                        OriginalRequest originalRequestForItem =
-                                checkInventoryAgainstOriginalRequests(inventory, originalRequests);
-                        inventory.investigation = Inventory.NOT_REQUIRED;
-                        String originalOwnerId = originalRequestForItem.employeeId;
-                        if (!inventory.employeeId.equals(originalOwnerId)) {
-                            inventory.originalOwnerId = originalOwnerId;
-                        } else {
-                            inventory.originalOwnerId = null;
-                        }
-                    } catch (InventoryDiscrepancyException e) {
-                        inventory.investigation = Inventory.REQUIRED;
-                    }
-
-                    foundInventory = inventory;
-
-                    tempFileWriter.write(inventory.toCsv());
-                    tempFileWriter.write("\n");
-
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+             FileWriter tempFileWriter = new FileWriter(tempFile, true)) {
+            tempFileWriter.write(bufferedReader.readLine() + "\n"); // header
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                if (!id.equals(line.split(";")[0])) {
+                    tempFileWriter.write(line + "\n");
                     line = bufferedReader.readLine();
+                    continue;
                 }
+                Inventory inventory = parseInventoryFromLine(line);
+                inventory.update(newInventoryData);
+
+                try {
+                    OriginalRequest originalRequestForItem =
+                            checkInventoryAgainstOriginalRequests(inventory, originalRequests);
+                    inventory.investigation = Inventory.NOT_REQUIRED;
+                    String originalOwnerId = originalRequestForItem.employeeId;
+                    if (!inventory.employeeId.equals(originalOwnerId)) {
+                        inventory.originalOwnerId = originalOwnerId;
+                    } else {
+                        inventory.originalOwnerId = null;
+                    }
+                } catch (InventoryDiscrepancyException e) {
+                    inventory.investigation = Inventory.REQUIRED;
+                }
+
+                foundInventory = inventory;
+
+                tempFileWriter.write(inventory.toCsv() + "\n");
+
+                line = bufferedReader.readLine();
             }
         } catch (Exception e) {
             tempFile.delete();
@@ -169,31 +164,27 @@ public class InventoryService {
         if (tempFile.exists()) {
             tempFile.delete();
         }
-        try {
-            FileReader fileReader = new FileReader(file);
-            try (BufferedReader bufferedReader = new BufferedReader(fileReader);
-                 FileWriter tempFileWriter = new FileWriter(tempFile, true)) {
-                tempFileWriter.write(bufferedReader.readLine() + "\n"); // header
-                String line = bufferedReader.readLine();
-                while (line != null) {
-                    Inventory inventory = parseInventoryFromLine(line);
-                    try {
-                        OriginalRequest originalRequestForItem =
-                                checkInventoryAgainstOriginalRequests(inventory, originalRequests);
-                        inventory.investigation = Inventory.NOT_REQUIRED;
-                        String originalOwnerId = originalRequestForItem.employeeId;
-                        if (!inventory.employeeId.equals(originalOwnerId)) {
-                            inventory.originalOwnerId = originalOwnerId;
-                        }
-                    } catch (InventoryDiscrepancyException e) {
-                        inventory.investigation = Inventory.REQUIRED;
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+             FileWriter tempFileWriter = new FileWriter(tempFile, true)) {
+            tempFileWriter.write(bufferedReader.readLine() + "\n"); // header
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                Inventory inventory = parseInventoryFromLine(line);
+                try {
+                    OriginalRequest originalRequestForItem =
+                            checkInventoryAgainstOriginalRequests(inventory, originalRequests);
+                    inventory.investigation = Inventory.NOT_REQUIRED;
+                    String originalOwnerId = originalRequestForItem.employeeId;
+                    if (!inventory.employeeId.equals(originalOwnerId)) {
+                        inventory.originalOwnerId = originalOwnerId;
                     }
-
-                    tempFileWriter.write(inventory.toCsv());
-                    tempFileWriter.write("\n");
-
-                    line = bufferedReader.readLine();
+                } catch (InventoryDiscrepancyException e) {
+                    inventory.investigation = Inventory.REQUIRED;
                 }
+
+                tempFileWriter.write(inventory.toCsv() + "\n");
+
+                line = bufferedReader.readLine();
             }
         } catch (FileNotFoundException e) {
             // If there is no storage file, there is nothing to check
