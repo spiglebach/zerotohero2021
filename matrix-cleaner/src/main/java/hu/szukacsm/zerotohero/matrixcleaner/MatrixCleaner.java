@@ -11,7 +11,7 @@ public class MatrixCleaner {
 
     int matrixLength;
 
-    public int[][] clean(int[][] matrix) {
+    public int[][] clean(int[][] matrix) { // recursive // todo make one with a queue and compare their speed
         originalMatrix = matrix;
         matrixLength = originalMatrix.length;
 
