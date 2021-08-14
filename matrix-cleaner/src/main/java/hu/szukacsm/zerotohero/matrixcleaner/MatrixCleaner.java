@@ -1,73 +1,104 @@
 package hu.szukacsm.zerotohero.matrixcleaner;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class MatrixCleaner {
     private int[][] originalMatrix;
     private int[][] newMatrix;
-    Set<MatrixPosition> alreadyVisitedPositions;
+    private int matrixLength;
+    private Queue<MatrixPosition> queue;
 
-    int matrixLength;
-
-    public int[][] clean(int[][] matrix) { // recursive // todo make one with a queue and compare their speed
+    public int[][] cleanWithQueue(int[][] matrix) {
         originalMatrix = matrix;
         matrixLength = originalMatrix.length;
 
         validateMatrixDimensions();
 
         newMatrix = new int[matrixLength][matrixLength];
-        alreadyVisitedPositions = new HashSet<>();
 
-        checkPosition(0, 0); // check top left
-        checkPosition(0, matrixLength - 1); // check top right
-        checkPosition(matrixLength - 1, 0); // check bottom left
-        checkPosition(matrixLength - 1, matrixLength - 1); // check bottom right
-        for (int index = 1; index < matrixLength - 1; index++) {
-            checkPosition(0, index, Direction.DOWN); // check rest of first row downward
-            checkPosition(matrixLength - 1, index, Direction.UP); // check rest of last row upward
-            checkPosition(index, 0, Direction.RIGHT); // check leftmost column to the right
-            checkPosition(index, matrixLength - 1, Direction.LEFT); // check rightmost column to the left
+        initializeQueueFromOriginalMatrix();
+        while (!queue.isEmpty()) {
+            processPosition(queue.remove());
         }
+
         return newMatrix;
+    }
+
+    private void initializeQueueFromOriginalMatrix() {
+        queue = new LinkedList<>();
+        addMatrixCornersToQueue();
+        addMatrixSidesToQueue();
+    }
+
+    private void addMatrixCornersToQueue() {
+        queue.add(MatrixPosition.corner(0, 0));
+        queue.add(MatrixPosition.corner(0, matrixLength - 1));
+        queue.add(MatrixPosition.corner(matrixLength - 1, 0));
+        queue.add(MatrixPosition.corner(matrixLength - 1, matrixLength - 1));
+    }
+
+    private void addMatrixSidesToQueue() {
+        for (int index = 1; index < matrixLength - 1; index++) {
+            queue.add(MatrixPosition.starterWithOrientation(0, index, Direction.DOWN));
+            queue.add(MatrixPosition.starterWithOrientation(matrixLength - 1, index, Direction.UP));
+            queue.add(MatrixPosition.starterWithOrientation(index, 0, Direction.RIGHT));
+            queue.add(MatrixPosition.starterWithOrientation(index, matrixLength - 1, Direction.LEFT));
+        }
+    }
+
+    private void processPosition(MatrixPosition position) {
+        int row = position.row;
+        int column = position.column;
+        if (shouldCopyAndCheckNeighbors(row, column)) {
+            newMatrix[row][column] = originalMatrix[row][column];
+            addNeighborsToQueue(position);
+        }
+    }
+
+    private boolean shouldCopyAndCheckNeighbors(
+            int row, int column) {
+        if (isIndexOutOfRange(row)) return false;
+        if (isIndexOutOfRange(column)) return false;
+        if (originalMatrix[row][column] == 0) return false;
+        if (originalMatrix[row][column] == newMatrix[row][column]) return false; // already copied this position
+        return true;
+    }
+
+    private void addNeighborsToQueue(MatrixPosition position) {
+        if (position.isCorner) return;
+        if (position.isStarter) {
+            queue.add(position.offsetInDirection(position.orientation));
+            return;
+        }
+        if (Direction.DOWN.equals(position.orientation)) {
+            queue.add(position.offsetInDirection(Direction.DOWN));
+            queue.add(position.offsetInDirection(Direction.RIGHT));
+            queue.add(position.offsetInDirection(Direction.LEFT));
+        }
+        if (Direction.UP.equals(position.orientation)) {
+            queue.add(position.offsetInDirection(Direction.UP));
+            queue.add(position.offsetInDirection(Direction.RIGHT));
+            queue.add(position.offsetInDirection(Direction.LEFT));
+        }
+        if (Direction.RIGHT.equals(position.orientation)) {
+            queue.add(position.offsetInDirection(Direction.UP));
+            queue.add(position.offsetInDirection(Direction.RIGHT));
+            queue.add(position.offsetInDirection(Direction.DOWN));
+        }
+        if (Direction.LEFT.equals(position.orientation)) {
+            queue.add(position.offsetInDirection(Direction.UP));
+            queue.add(position.offsetInDirection(Direction.LEFT));
+            queue.add(position.offsetInDirection(Direction.DOWN));
+        }
     }
 
     private void validateMatrixDimensions() {
         assert Arrays.stream(originalMatrix).allMatch(row -> row.length == matrixLength);
     }
 
-    private void checkPosition(
-            int row, int column,
-            Direction ... possibleDirections) {
-        if (isIndexOutOfRange(row)) return;
-        if (isIndexOutOfRange(column)) return;
-        if (originalMatrix[row][column] == 0) return;
-        MatrixPosition position = new MatrixPosition(row, column);
-        if (alreadyVisitedPositions.contains(position)) return;
-        newMatrix[row][column] = originalMatrix[row][column];
-        alreadyVisitedPositions.add(position);
-        checkNeighborsInPossibleDirections(row, column, possibleDirections);
-    }
-
     private boolean isIndexOutOfRange(int index) {
-        return index < 0 || index >= originalMatrix.length;
-    }
-
-    private void checkNeighborsInPossibleDirections(int row, int column, Direction ... possibleDirections) {
-        for (Direction direction : possibleDirections) {
-            if (Direction.UP.equals(direction)) {
-                checkPosition(row - 1, column, Direction.UP, Direction.RIGHT, Direction.LEFT);
-            }
-            if (Direction.RIGHT.equals(direction)) {
-                checkPosition(row, column + 1, Direction.RIGHT, Direction.DOWN, Direction.UP);
-            }
-            if (Direction.DOWN.equals(direction)) {
-                checkPosition(row + 1, column, Direction.DOWN, Direction.LEFT, Direction.RIGHT);
-            }
-            if (Direction.LEFT.equals(direction)) {
-                checkPosition(row, column - 1, Direction.LEFT, Direction.DOWN, Direction.UP);
-            }
-        }
+        return index < 0 || index >= matrixLength;
     }
 }

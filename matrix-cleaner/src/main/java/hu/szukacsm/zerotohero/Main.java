@@ -11,7 +11,7 @@ public class Main {
                 new int[] {0, 0, 0, 1}
         };
         print(matrix);
-        print(new MatrixCleaner().clean(matrix));
+        print(new MatrixCleaner().cleanWithQueue(matrix));
     }
 
     public static void print(int[][] matrix) {
