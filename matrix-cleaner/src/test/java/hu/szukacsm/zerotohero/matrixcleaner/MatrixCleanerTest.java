@@ -73,8 +73,8 @@ class MatrixCleanerTest {
     }
 
     @Test
-    void testCleanOn10000x10000MatrixFilledWithOnes() {
-        testCleanOnNxNMatrixFilledWithOnes(10000);
+    void testCleanOn3000x3000MatrixFilledWithOnes() {
+        testCleanOnNxNMatrixFilledWithOnes(3000);
     }
 
     @Test
